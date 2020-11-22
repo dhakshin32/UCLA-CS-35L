@@ -1,0 +1,103 @@
+1. First I did [wget https://web.cs.ucla.edu/classes/fall20/cs35L/
+assign/coreutils-with-bug.tar.gz]
+
+2. Next I did [gunzip coreutils-with-bug.tar.gz] followed by 
+[tar -xvf coreutils-with-bug.tar] to unzip the file
+
+3. Next I did [./configure--prefix=/u/cs/ugrad/dhakshin/assign5/coreutilscopy]
+
+4. Next I did [make] got this error:
+
+utimens.h:2:5: error: conflicting types for 'futimens'
+    2 | int futimens (int, char const *, struct timespec const [2]);
+      |     ^~~~~~~~
+In file included from utimecmp.h:25,
+                 from utimecmp.c:25:
+/usr/include/sys/stat.h:373:12: note: previous declaration of 'futimens' was here
+  373 | extern int futimens (int __fd, const struct timespec __times[2]) __THROW;
+      |            ^~~~~~~~
+
+This error was thrown because there were two functions with the same name but 
+different parameter
+
+5. Next I downloaded the patch [wget https://web.cs.ucla.edu/classes/fall20/
+cs35L/assign/coreutils.diff]
+
+6. Next I applied the patch by doing [patch -p0 < patch.diff] and did [make] 
+then [make install]
+
+There were no problems because the patch renamed one of the futimens functions 
+to coreutils_futimens, and another function tee to coreutils_tee. This prevented
+ the error in which was thrown before when tried to redefine a function with the same name
+
+7. Next to recreate the problem I created three files with different timestamps
+ by doing the following steps
+
+[touch -d '1918-11-11 11:00 GMT' /run/user/$(id -u)/stamp-wwi-armistice]
+[touch /run/user/$(id -u)/stamp-now]
+[sleep 1]
+[touch /run/user/$(id -u)/stamp-now1]
+
+8. Next I did [TZ=UTC0 /u/cs/ugrad/dhakshin/assign5/coreutilscopy/bin/ls -lt 
+--full-time /run/user/$(id -u)/stamp*] which output the file from 1918 first, 
+despite it being the oldest.
+
+9. Next I did [gdb /u/cs/ugrad/dhakshin/assign5/coreutilscopy/bin/ls]
+
+10. I first did [break main] then executed the program by doing [run -lt 
+--full-time /run/user/$(id -u)/stamp*]
+
+11. I did [next] until I saw sort_files and then I did [step]
+
+12. While stepping through this I saw that it called another function from 
+func = sort_reverse ? rev_cmp_mtime : compare_mtime; So I did [break compare_mtime] 
+and ran it again using [run -lt --full-time /run/user/$(id -u)/stamp*]
+
+13. I did [next] until I got to the function compare_mtime(). I then did [list] to
+ see the code in that function which calculated the time difference between the 
+files by doing int diff = timespec_cmp (get_stat_mtime (&b->stat). I then wanted 
+to investigate timespec_cmp() 
+
+14. I did [next] until I got to the point where timespec_cmp() was called and then did [step]
+
+15. I did [list] to see the code for timespec_cmp()(which was located in timespec.h)
+ and saw that the time of file a was being subtracted from b in int 
+diff = a.tv_sec - b.tv_sec; I did [print diff] and saw that the number was a positive
+ value. This was because the date for wwi-armistice is so far in the past so our diff
+ value is negative but due to the fact this negative integer is so large, there 
+becomes overflow which makes it a positive integer.
+
+16. I then did [q] to quit gdb
+
+17. Now time to create a patch. I went to coreutils with bug 
+[cd /u/cs/ugrad/dhakshin/assign5/coreutils-with-bug]. Next I found the timspec.h file 
+in the lib directory [cd lib] and copied it into my main folder by doing 
+[cp timespec.h /u/cs/ugrad/dhakshin/assign5]
+
+18. I made another copy of this by doing [cp timespec.h timespec2.h]
+
+19. Next I did emacs timespec.h and edited the code to create a if statement 
+that returns a positive number if a>b, negative number if a<b, and 0 if a==b.
+
+20. Next I created a diff by doing [diff -u timespec2.h timespec.h > change.diff] 
+and did C-x 4 a to make a change log entry.
+
+21. Next I moved this file by doing [mv change.diff /u/cs/ugrad/dhakshin/assign5/coreutils-with-bug/lib]
+
+22. Next I applied the patch using patch -p0 < change.diff
+
+23. Next I did [make] then [make install]
+
+24. When I redid the command [TZ=UTC0 /u/cs/ugrad/dhakshin/assign5/coreutilscopy/bin/ls 
+-lt --full-time /run/user/$(id -u)/stamp*] the output showed stamp-wwi-armistice file last 
+ so we know that it is working correctly
+
+25. Reproducing in home directory: [touch -d '1918-11-11 11:00 GMT' wwi-armistice] 
+then [touch now] then [sleep 1] then [touch now1] then [TZ=UTC0 ~/coreutils/bin/ls 
+-lt --full-time wwi-armistice now now1]
+
+This output the wwi-armistice file at the top despite it having the oldest date, 
+which is incorrect. The date for this file shows up as 2054 despite entering 1918 
+when we first created the file. So the SEASnet server is not correct either.
+
+
