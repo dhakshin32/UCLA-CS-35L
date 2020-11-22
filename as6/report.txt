@@ -1,0 +1,222 @@
+PART 1
+
+1. First I had to code out tr2b.c
+
+2. I first had to check if the number of arugments was equal to 3 and if not I had to output 
+to standard error that the number of arguments was incorrect (this means that either there is 
+no from or to or neither or more than 2 parameters passed)
+
+3. Next I stored the FROM and TO strings and calculated the length of each string using strlen
+
+4. If the lengths were not equal then I outputted to standard error
+
+5. Then I checked if there were any duplicate characters in FROM and if so then I outputted to
+ standard error
+
+6. Next I used getchar() and stored it in char c until c was equal to EOF. Furing every iteration 
+I printed out c (using putchar()), and if c matched any of the characters in FROM, then I printed 
+out the same index of the matching character from TO instead of c.
+
+7. This process was repeated for tr2u.c
+
+8. I followed the same steps (2-5) but instead of doing getchar() and putchar() I used read and 
+write instead. I did read(0,&c,1) because 0 is the file descriptor for stdin and I did 1 for the 
+size since each char is 1 byte. I did write(1, &output, 1) since 1 was the file descriptor for 
+stdout and I did 1 for the size since each char is 1 byte.
+
+PART 2
+
+1. First need to create a file with 5,000,000 bytes. I used a lorem ipsum generator to generate 
+around 5,000,000 characters and copied the text into file called file.txt. To verify the file size
+ I did [ls -l] and saw that file.txt had 5618956 bytes in it.
+
+2. Now check strace when (a) when copying one file to another. 
+
+I did [strace -c ./tr2b 'abc' 'def' < file.txt > out.txt] which output 
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 65.81    0.001942           2       688           read
+ 28.53    0.000842           1       686           write
+  1.90    0.000056           6         9           mmap
+  0.95    0.000028           7         4           mprotect
+  0.85    0.000025           6         4           fstat
+  0.64    0.000019           9         2           open
+  0.37    0.000011          11         1           munmap
+  0.24    0.000007           7         1         1 access
+  0.24    0.000007           7         1           execve
+  0.20    0.000006           3         2           close
+  0.20    0.000006           6         1           brk
+  0.07    0.000002           2         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.002951                  1400         1 total
+
+Next I did [strace -c ./tr2u 'abc' 'def' < file.txt > out.txt] which output 
+
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 54.61    1.397477           5    274684           write
+ 45.38    1.161203           4    274685           read
+  0.00    0.000047           6         7           mmap
+  0.00    0.000032           8         4           mprotect
+  0.00    0.000018           9         2           open
+  0.00    0.000015          15         1           munmap
+  0.00    0.000015          15         1           brk
+  0.00    0.000014          14         1           execve
+  0.00    0.000013          13         1         1 access
+  0.00    0.000009           4         2           fstat
+  0.00    0.000006           3         2           close
+  0.00    0.000003           3         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    2.558852                549391         1 total
+
+
+3. Now (b) when copying a file to your terminal
+
+First I did [strace -c ./tr2b 'abc' 'def' < file.txt] which output
+
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 96.35    0.068051           3     18984           write
+  3.40    0.002399           3       688           read
+  0.08    0.000053           5         9           mmap
+  0.04    0.000026           6         4           mprotect
+  0.03    0.000018           9         2           open
+  0.02    0.000017           4         4           fstat
+  0.02    0.000017          17         1           brk
+  0.02    0.000015          15         1           execve
+  0.02    0.000013          13         1         1 access
+  0.02    0.000011          11         1           munmap
+  0.01    0.000006           3         2           close
+  0.00    0.000003           3         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.070629                 19698         1 total
+
+Next I did [strace -c ./tr2u 'abc' 'def' < file.txt] which output
+
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 55.78   30.546750           5   5618956           write
+ 44.22   24.217231           4   5618958           read
+  0.00    0.000042           6         7           mmap
+  0.00    0.000026           6         4           mprotect
+  0.00    0.000021          21         1           execve
+  0.00    0.000019           9         2           open
+  0.00    0.000014          14         1           brk
+  0.00    0.000013          13         1         1 access
+  0.00    0.000011          11         1           munmap
+  0.00    0.000007           3         2           fstat
+  0.00    0.000005           2         2           close
+  0.00    0.000003           3         1           arch_prctl
+------ ----------- ----------- --------- --------- ----------------
+100.00   54.764142              11237936         1 total
+
+We can say that tr2u takes more time than tr2b in both cases. This is because there is an 
+overhead every time a system call is made since there is a switch being made from user mode 
+to kernal mode. The reason that tr2b does not take much time is because getchar and putchar 
+use a buffer and wait to make a system call until they are full, so less system calls are made
+ and therefore less time is taken since there is less overhead. Since tr2u makes more system 
+calls than tr2b, due to there not being a buffer, it takes more time
+
+4. Checking speed of program
+
+time ./tr2b abc def < file.txt > output.txt
+real	0m0.241s
+user	0m0.184s
+sys	0m0.005s
+
+time ./tr2u abc def < file.txt > output.txt
+real	0m11.332s
+user	0m1.464s
+sys	0m9.812s
+
+tr2b is faster once again due to the fact that it is a buffer there are less system calls
+ made and therefore less overhead
+
+HOMEWORK
+
+
+1. First I created 4 files with the input lines of 0, 100, 10000, and 1 million, similar
+ to the way I created the large text file for the lab assignment. I used a text generator and specified the length.
+
+Next I checked the time command to measure the performance of sfrob and sfrobu.
+
+2. [time ./sfrob < zero.txt]
+
+real	0m0.002s
+user	0m0.000s
+sys	0m0.001s
+
+3. [time ./sfrobu < zero.txt]
+
+real	0m0.002s
+user	0m0.002s
+sys	0m0.000s
+
+4. [time ./sfrobu -f < zero.txt]
+
+real	0m0.002s
+user	0m0.002s
+sys	0m0.000s
+
+5. [time ./sfrob < hundred.txt]
+
+real	0m0.004s
+user	0m0.003s
+sys	0m0.000s
+
+6. [time ./sfrobu < hundred.txt]
+
+real	0m0.006s
+user	0m0.001s
+sys	0m0.005s
+
+7. [time ./sfrobu -f < hundred.txt]
+
+real	0m0.007s
+user	0m0.003s
+sys	0m0.004s
+
+8. [time ./sfrob < 10k.txt]
+
+real	0m0.080s
+user	0m0.054s
+sys	0m0.021s
+
+9. [time ./sfrobu < 10k.txt]
+
+real	0m0.447s
+user	0m0.090s
+sys	0m0.354s
+
+10. [time ./sfrobu -f < 10k.txt]
+
+real	0m0.453s
+user	0m0.115s
+sys	0m0.334s
+
+11. [time ./sfrob < million.txt]
+
+real	0m15.648s
+user	0m6.740s
+sys	0m2.124s
+
+12. [time ./sfrobu < million.txt]
+
+real	0m45.940s
+user	0m11.123s
+sys	0m34.165s
+
+13. [time ./sfrobu -f < million.txt]
+
+real	0m47.026s
+user	0m13.344s
+sys	0m33.365s
+
+We can see that the sfrobu program generally takes longer due to it using more system calls which creates an overhead. 
+The CPU time cost as function would be an exponential function since the time taken to execute increases rapidly as there
+ are more lines added to the file.
+
+14. The system call used to allocate memory is mmap(). So to allocate memory for my buffer, it would look 
+like char* buff = mmap(NULL,8192,MAP_PRIVATE|MAP_ANONYMOUS, -1, 0).
+Then to reallocate memory the command would look like mremap(buffAddress,oldLength,newLength,MREMAP_MAYMOVE,new address). I saw this by running strace with the zero.txt
+and with the hundred.txt file to look at at all the different system calls made and to see which ones increased as the number of lines in the text file increased.
