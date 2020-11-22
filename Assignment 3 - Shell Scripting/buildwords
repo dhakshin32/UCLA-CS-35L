@@ -1,0 +1,38 @@
+#!/bin/bash
+
+#remove ? or <u> or </u>
+sed -E 's/<[/]?u>|\?//g' |
+
+#searches for table tags
+grep -E "(<td.*>.+</td>)" |
+
+#removes all extra spaces at
+sed "s/^[[:space:]]*//g" |
+
+#cuts out table tags
+sed -E  "s/(<.?td>)//g" |
+
+#cuts extra tags
+sed -E "s/(<.*>)//g" |
+
+#removes blank lines
+sed '/^$/d' |
+
+#change all uppercase to lowercase
+tr '[:upper:]' '[:lower:]' |
+
+#replace ` with '
+sed "s/\`/\'/g" |
+
+#replace - with space
+sed "s/-/ /g" |
+
+#removes all extra spaces
+#at the front of a word
+sed "s/^[[:space:]]*//g"|
+
+#delete all lines with non hawaiian letters
+sed "/[^pk'mnwlhaeiou[:space:]]/d" |
+
+sort -u
+

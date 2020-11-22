@@ -1,0 +1,178 @@
+#!/bin/bash
+
+#1
+
+main(){
+
+    if [ -n "$2" ]
+    then
+	
+	if [ $1 != "-r" ]; then
+	   echo "Error: More than one parameter entered." 1>&2
+	   if [ -n "$3" ]; then
+	       echo ""
+	   else
+	       exit 1
+	   fi
+	 
+	else
+	     if [  ! -d $2 ]; then
+            echo "Error: Not a directory." 1>&2
+            if [ -n "$3" ]; then
+               echo ""
+           else
+               exit 1
+           fi
+             fi
+	     
+	     if [ -L $2 ]; then
+            echo "Error: Cannot be symbolic link" 1>&2
+            if [ -n "$3" ]; then
+               echo ""
+           else
+               exit 1
+           fi
+	     fi
+	     
+	     if [[ $2 == -* ]]; then
+            echo "Error: Cannot start with -" 1>&2
+            if [ -n "$3" ]; then
+               echo ""
+           else
+               exit 1
+           fi
+             fi
+
+	     check "-r" $2
+	fi 
+	       
+    elif [ -n "$1" ] && [ $1 != "-r" ]
+    then
+	if [  ! -d $1 ]; then
+	    echo "Error: Not a directory." 1>&2
+	    if [ -n "$3" ]; then
+               echo ""
+           else
+               exit 1
+           fi
+	fi
+	
+	if [ -L $1 ]; then
+	    echo "Error: Cannot be symbolic link" 1>&2
+           if [ -n "$3" ]; then
+               echo ""
+           else
+               exit 1
+           fi
+	fi
+
+	if [[ $1 == -* ]]; then
+	    echo "Error: Cannot start with -" 1>&2
+            if [ -n "$3" ]; then
+               echo ""
+           else
+               exit 1
+           fi
+	fi
+	
+	check "nah" $1
+	
+    elif [ "$1" == "-r" ]; then 
+	 check "-r"
+    else
+	
+	check
+    fi
+    
+}
+
+check(){
+
+    files=$( ls -1 $2 )
+    invalids=$(echo "$files" | grep -Ev "(^[_[:alpha:]][[:alpha:]\._-]{0,13}$)")
+    valids=$(echo "$files" | grep -E "(^[_[:alpha:]][[:alpha:]\._-]{0,13}$)")
+    duplicates=$(echo "$valids"| sort -f | uniq -iD)
+
+    #acculumation of directories
+    printvalid=$(echo -e "$valids")
+    dirs=""
+    flag=""
+    if ! [[ $2 =~ (\/$) ]] && ! [ -z "${2}" ]; then
+	flag='/'
+    fi
+    
+    while read line; do
+	
+        if [ -d "${2}$flag${line}" ];then
+
+	    dirs="${dirs}${line}\n";
+	fi
+    done <<< "$printvalid"
+    #acculumation of directories
+
+    
+    if ! [[ $invalids =~ [^\n[:space:]] ]]; then
+
+	output="${duplicates}"
+    elif ! [[ $duplicates =~ [^\n[:space:]] ]]; then
+
+	output="${invalids}"
+    else
+	output="${invalids}
+${duplicates}"
+	fi
+
+    x=$(echo -e "$output")    
+    
+    if [ -n $2 ] && [[ $output =~ [^\n[:space:]] ]];then
+	
+	while read line; do
+	    
+	    if [ -d "${line}" ];then
+            echo "$2/${line}/";
+	    elif [ "$1" == "-r" ] && [ -z $2 ]; then
+		echo "$2/${line}";
+	    elif [ "$1" == "-r" ] && ! [[ $2 =~ (^\/) ]]; then
+		if ! [[ $2 =~ (\/$) ]]; then    
+		    echo "/$2/${line}";
+		else
+		    echo "/$2${line}";
+		fi
+		
+	    else
+		echo "$2/${line}";
+	    fi
+	done <<< "$x"
+    elif [[ $output =~ [^\n[:space:]] ]];then
+	while read line; do
+	if [ -d "${line}" ];then
+	    echo "/${line}/";
+	else
+	    echo "/${line}";
+	fi
+	
+	done <<< "$x"
+    
+    fi
+    
+    if [ "$1" == "-r" ] && ! [ -z "${dirs}" ] && [ $dirs != "\n" ]; then
+
+	printdirs=$(echo -e "$dirs")
+
+	while read line; do
+	    if [ -z $2 ]; then
+
+		currentdir="$2${line}"
+	    else
+		currentdir="$2/${line}"
+	    fi
+	    
+	    
+	    main "-r" $currentdir 1
+	    
+	done <<< "$printdirs"	
+    fi    
+
+}
+
+main $1 $2

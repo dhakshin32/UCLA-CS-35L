@@ -1,0 +1,120 @@
+1. First I did [locale] to see if I was in standard C 
+but it outputted "en_US.UTF-8""
+
+2. Next I did the command [export LC_ALL='C'], this 
+set all locale variables to standard c
+
+3. Next I did [sort -o words /usr/share/dict/words], 
+this sorted the list of words in the file words and 
+output them into another file on my working directory 
+
+4. Next to save the web page I did [ wget https://web.
+cs.ucla.edu/classes/fall20/cs35L/assign/assign3.html] 
+which created an assign3.html page in my working directory
+
+5. I did [cat assign3.html | tr -c 'A-Za-z' '[\n*]'] 
+and it outputted a new line after every word. It replaced 
+the complement of all letters (capital and lowercase) and 
+replaced them with \n which created a newline after every 
+word and sometimes multiple new lines.
+
+6. Next [cat assign3.html | tr -cs 'A-Za-z' '[\n*]'], this 
+output the same words as #5 but the -s flag squeezed the 
+newlines so that each word was on it's own new line and 
+there weren't extra new lines. It replaced each instance 
+of a sequence of repeated characters listed in set1 with a 
+single instance of the character specified in set2.
+
+7. I did [cat assign3.html | tr -cs 'A-Za-z' '[\n*]' | sort], 
+this output the same thing as #6 but sorted the words in 
+alphabetical order. There were no blank lines in-between words
+ and each word was on it's own line.
+
+8. Next [cat assign3.html | tr -cs 'A-Za-z' '[\n*]' | sort] 
+had the same output as #7 but it suppressed all duplicate words.
+ So it sorted all the words while only including 1 instance of each word.
+
+9. Next [cat assign3.html |tr -cs 'A-Za-z' '[\n*]' | sort -u | 
+comm - words], compared the all the words output from #8 with the
+ words file (the - in addition to the pipe } allowed the output of
+ #8 to be used as FILE1 for comparison with the words file), while
+ displaying all 3 columns (lines unique to FILE1, lines unique to 
+FILE2, and lines common to both files).
+
+10. Then [cat assign3.html |tr -cs 'A-Za-z' '[\n*]' | sort -u | comm 
+-23 - words], this output the same thing as #9 but -23 suppressed the
+ output of lines unique to FILE2, and lines common to both files). So 
+the output is only column 1, lines unique to FILE1
+
+11. To get the Hawaiian to English website I did [wget https://www.
+mauimapp.com/moolelo/hwnwdshw.htm]
+
+12. Next I created my shell script and used emacs to edit. 
+
+13. I entered [#!/usr/bin/env bash] at the top to automaticity find 
+the bash interpreter in $PATH.
+
+14. Next I gave myself permission to execute by doing [chmod u+x buildwords].
+
+15. Next I entered [sed -E 's/<[/]?u>|\?//g' |], this sed command 
+removes a ? or <u> or </u> and then pipes the output
+
+16. Next [grep -E "(<td.*>.+</td>)" |] searches to find all the table 
+elements (english and hawaiian) which filters out all the extra html 
+tags and other parts of the file, and then pipes the output
+
+17. Next [sed "s/^[[:space:]]*//g" |] removes all the extra spaces at 
+the front of the line then pipes output
+
+18. [sed -E  "s/(<.?td>)//g" |] removes all the table tags then pipes output
+
+19. Next [sed -E "s/(<.*>)//g" |] removes all other tags that were nested 
+in the tags that were removed earlier (such as for font size) then pipes output
+
+20. Next [sed '/^$/d' |] removes all blank lines so every line contains 
+text, then pipes output
+
+21. [tr '[:upper:]' '[:lower:]' |] translates all uppercase characters to
+ lower case characters output
+
+22. [sed "s/\`/\'/g" |] replaces ASCII grave accent with ASCII apostrophe
+ then pipes output
+
+23. [sed "s/-/ /g" |] replaces - (dash) with a space, then pipes output 
+
+24. [sed "s/^[[:space:]]*//g"|] removes all the extra spaces at the front
+of the line then pipes output
+
+25. [sed "/[^pk'mnwlhaeiou[:space:]]/d" |] delete all lines that contain
+ non hawaiian letters
+
+26. [sort -u] use the sort command to sort the words and delete duplicates
+
+27. [os] stores output of buildwords into hwords
+
+28. To make HAWAIIANCHECKER command, [tr '[:upper:]' 
+'[:lower:]' | tr -cs "A-Za-z" '[\n*]' | sort -u | 
+comm -23 - hwords]. First upper case is 
+translated to lowercase. 
+
+29. Running hwords on it self [cat hwords | tr '[:upper:]' '[:lower:]' |
+ comm -23 - hwords | wc -w] we see that it outputs 0
+
+30. Next we check hwords against the 35L website. So first we get the 
+webpage [wget https://web.cs.ucla.edu/classes/fall20/cs35L/assign/assign3.html].
+ Next [cat assign3.html | tr '[:upper:]' '[:lower:]' | tr -cs "A-Za-z" '[\n*]' 
+| sort -u | comm -23 - hwords | wc -w]. This outputted that there were 565 
+misspelled hawaiian words on the webpage.
+
+31. Next check 35L website with english dictionary [cat assign3.html 
+| tr -cs "A-Za-z" '[\n*]' | sort -u | comm -23 - words | wc -w]. This showed 
+that there were 139 misspelled english words.
+
+32. Next we see the words misspelled in English but not Hawaiian. 
+[cat assign3.html | tr -cs "A-Za-z" '[\n*]' | sort -u | comm -23 - words | 
+comm -12 - hwords] Examples of the misspelled words are wiki and halau.
+
+33. Next we see the words misspelled in Hawaiian but not English. 
+[cat assign3.html | tr -cs "A-Za-z" '[\n*]' | tr '[:upper:]' '[:lower:]' 
+| sort -u | comm -23 - hwords | comm -12 - words] Examples of the misspelled
+ words are able and about.
