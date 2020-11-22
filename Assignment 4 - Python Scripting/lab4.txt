@@ -1,0 +1,40 @@
+1. First to check if the problem occurs, I did [/usr/bin/ls -A -a] 
+and [/usr/bin/ls -a -A] and they both outputted the same thing and
+ included . and .. (-a overrides)
+
+2. To check the version of coreutils I did [ls --version] and saw 
+that it was ls (GNU coreutils) 8.22
+
+3. First I grabbed the coreutils source code by doing [wget 
+ftp://ftp.gnu.org/gnu/coreutils/coreutils-8.29.tar.xz], then 
+signature [ wget ftp://ftp.gnu.org/gnu/coreutils/coreutils-8.29
+.tar.xz.sig], then keyring [wget https://ftp.gnu.org/gnu/gnu-keyring.gpg].
+
+4. Next I verified using [gpg --verify --keyring ./gnu-keyring.gpg
+ coreutils-8.29.tar.xz.sig]. There were no problems and it outputted
+ "Good signature". But there was a warning that said "There is no 
+indication that the signature belongs to the owner". This is 
+because there is no way to validate the signature to the owner
+ without using a digital certificate.
+
+5. Next I installed coreutils by doing [./configure 
+--prefix=/u/cs/ugrad/dhakshin/assign4/coreutilscopy] then [make]
+ then [make install]. No problems occurred.
+
+6. To verify if the problem still exists I did [/u/cs/ugrad/dhakshin
+/assign4/coreutilscopy/bin/ls -a -A] and [/u/cs/ugrad/dhakshin/assign4
+/coreutilscopy/bin/ls -A -a] and they both outputted the same thing and
+ included . and .. (-a overrides)
+
+7. Next I did [emacs patch.diff] and then pasted the contents of the patch 
+in it. Next I did [patch -p1 < patch.diff] and clicked entered to skip parts
+ of the patch text that are not part of the actual patch. -p1 strips everything
+ until the first slash /.
+
+8. Next I did [make] but it said that 'automake-1.15' is missing on your
+ system' so I did [autoreconf -f -i] and then did [make]. Command CC was 
+executed which is used to compile the source file
+
+9. Next I did [/u/cs/ugrad/dhakshin/assign4/coreutilscopy/bin/ls -a -A]
+ and [/u/cs/ugrad/dhakshin/assign4/coreutilscopy/bin/ls -A -a], the first
+ command did not output . and .. while the second one did (-a did not override)

@@ -1,0 +1,46 @@
+Q1. The performance is improved since the command's flags work consistently 
+and work in the order that they are given so the output is distinct based on
+ which flag is used last. Since we are removing an if statement in the patch
+ then we technically improve the performance since there is one less check but
+ this is negligible.
+
+Q2. Since we applied a patch, other files could have been modified which could
+ create unexpected behavior. So the patch needs to be checked thoroughly. Also other
+ files that depend on the patched files may not work due to changes.
+
+Q3. When run on /dev/null, there is an error:
+Traceback (most recent call last):
+  File "randline.py", line 70, in <module>
+    main()
+  File "randline.py", line 64, in main
+    sys.stdout.write(generator.chooseline())
+  File "randline.py", line 34, in chooseline
+    return random.choice(self.lines)
+  File "/usr/local/cs/Python-2.7.14/lib/python2.7/
+random.py", line 277, in 
+  choice
+    return seq[int(self.random() * len(seq))]  # 
+raises IndexError if seq is 	
+    empty
+IndexError: list index out of range
+
+In the chooseline function, where it returns 
+'seq[int(self.random() * len(seq))]', since the
+ file is empty, when it does seq[index] it returns 
+an error since seq is empty and there is no index to access.
+
+Q4. When using python3 I did [python3 ./randline.py 
+/dev/null] and it gave me the error:
+File "/w/home.27/cs/ugrad/dhakshin/assign4/./randline.py", 
+line 65
+    except IOError as (errno, strerror):
+                      ^
+SyntaxError: invalid syntax
+
+In python3 the syntax is changed to something like except 
+IOError as err so the code in the current python2 script is
+ not backward compatible with python3
+
+Q5. When I run with python2, there is no error. This is because
+ all of the code that I used is backward compatible and I did not
+ use anything that was outdated/changed in python3
