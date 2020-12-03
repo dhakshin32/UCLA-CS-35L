@@ -1,0 +1,123 @@
+1. First I did [wget https://web.cs.ucla.edu/classes/fall20/cs35L/assign/simpgmp.c] to download the file
+
+2. Next to build, I did [gcc -lgmp -o simpgmp simpgmp.c]
+
+3. Next I did [./simpgmp 24] and this gave me 16777216 as the output.
+
+4. Next did [./simpgmp 16777216 > o.txt] 
+
+5. I did [wc -m o.txt] to count the number of characters and to verify that the number had 5,050,446 decimal digits
+
+6. I did [head -c4 o.txt] to get the first 4 digits of the number and I verified that it was 1818
+
+7. I did [tail -c5 o.txt] to get the last 4 digits of the number and I verified that it was 7536
+
+8. Next I did [ldd ./simpgmp] which outputted:
+
+linux-vdso.so.1 =>  (0x00007fff583fe000) 
+libgmp.so.10 => /lib64/libgmp.so.10 (0x00007efcd324b000) 
+libc.so.6 => /lib64/libc.so.6 (0x00007efcd2e7d000) 
+/lib64/ld-linux-x86-64.so.2 (0x00007efcd34c3000)
+
+So there 4 dynamic libraries used
+
+9. I did [strace ./simpgmp] and saw the following commands that are used for dynamic linking: 
+
+I noticed that for each library load a series of steps were followed, first open(), then read(), fstat(), mmap(), mprotect(), then close().
+
+So for lib gmp, I saw the following, and this was repeated for the other DL libraries too :
+
+open("/lib64/libgmp.so.10", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\200\304\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=495720, ...}) = 0
+mmap(NULL, 2584736, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f5372975000
+mprotect(0x7f53729eb000, 2093056, PROT_NONE) = 0
+mmap(0x7f5372bea000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x75000) = 0x7f5372bea000
+close(3) 
+
+open() is used to open the .so file
+read() is used to read the data from the dynamic library
+close() is used to closed the library file
+fstat() returns the size of the library file so an appropriate amount of space ca be allocated to read it
+mmap() creates a new mapping in the virtual address space of the calling process with the library file
+mprotect()  protects the library mapping from any attack
+
+10. Next I did [ls /usr/bin | awk '(NR-605280083)%251 == 0'] which outputted:
+aserver
+db_printlog
+gdk-pixbuf-query-loaders-64
+htxelatex
+kpsexpand
+mountpoint
+pamperspective
+pkla-admin-identities
+python
+sleep
+uptime
+
+11. Next I did [cd /usr/bin] and did ldd on every library. All libraries outputted no errors except:
+
+ldd ./htxelatex: not a dynamic executable. We get this error because htxelatex is a shell script which is not dynamically executable. Only files that are in ELF format can be executed and shell scripts are not one of those since they are not compiled
+
+ldd ./kpsexpand: not a dynamic executable. We get this error because kpsexpand is a shell script which is not dynamically executable. Only files that are in ELF format can be executed and shell scripts are not one of those since they are not compiled
+
+12. I created a shell script called sort to output all of the libraries into 1 text file.
+
+#!/bin/bash
+
+for x in "$(ls /usr/bin | awk '(NR-605280083)%251 == 0')"; 
+do
+	dl=`which $x`
+	ldd $dl
+done
+
+13. Next I did [chmod +x sort], then [./sort > s.txt]
+
+14. Next I sorted only the files that ended in .so by doing [./sort | grep so | sed 's/(\(0x[[:alnum:]]*\))//' | sort -u] which output:
+
+this
+	/lib64/ld-linux-x86-64.so.2 
+	libasound.so.2 => /lib64/libasound.so.2 
+	libattr.so.1 => /lib64/libattr.so.1 
+	libblkid.so.1 => /lib64/libblkid.so.1 
+	libbz2.so.1 => /lib64/libbz2.so.1 
+	libc.so.6 => /lib64/libc.so.6 
+	libcap.so.2 => /lib64/libcap.so.2 
+	libdb-5.3.so => /lib64/libdb-5.3.so 
+	libdl.so.2 => /lib64/libdl.so.2 
+	libdw.so.1 => /lib64/libdw.so.1 
+	libelf.so.1 => /lib64/libelf.so.1 
+	libffi.so.6 => /lib64/libffi.so.6 
+	libgcc_s.so.1 => /lib64/libgcc_s.so.1 
+	libgcrypt.so.11 => /lib64/libgcrypt.so.11 
+	libgdk_pixbuf-2.0.so.0 => /lib64/libgdk_pixbuf-2.0.so.0 
+	libgio-2.0.so.0 => /lib64/libgio-2.0.so.0 
+	libglib-2.0.so.0 => /lib64/libglib-2.0.so.0 
+	libgmodule-2.0.so.0 => /lib64/libgmodule-2.0.so.0 
+	libgobject-2.0.so.0 => /lib64/libgobject-2.0.so.0 
+	libgpg-error.so.0 => /lib64/libgpg-error.so.0 
+	liblz4.so.1 => /lib64/liblz4.so.1 
+	liblzma.so.5 => /lib64/liblzma.so.5 
+	libm.so.6 => /lib64/libm.so.6 
+	libmount.so.1 => /lib64/libmount.so.1 
+	libnetpbm.so.11 => /lib64/libnetpbm.so.11 
+	libpcre.so.1 => /lib64/libpcre.so.1 
+	libpng15.so.15 => /lib64/libpng15.so.15 
+	libpolkit-gobject-1.so.0 => /lib64/libpolkit-gobject-1.so.0 
+	libpthread.so.0 => /lib64/libpthread.so.0 
+	libresolv.so.2 => /lib64/libresolv.so.2 
+	librt.so.1 => /lib64/librt.so.1 
+	libselinux.so.1 => /lib64/libselinux.so.1 
+	libsystemd.so.0 => /lib64/libsystemd.so.0 
+	libutil.so.1 => /lib64/libutil.so.1 
+	libuuid.so.1 => /lib64/libuuid.so.1 
+	libz.so.1 => /lib64/libz.so.1 
+	linux-vdso.so.1 
+
+
+
+
+
+
+
+
