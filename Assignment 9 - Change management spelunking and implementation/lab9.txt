@@ -1,0 +1,56 @@
+First I did [cd  ~eggert/src/gnu/emacs-CS-35L] to go to the git repository 
+
+1. To check the disk space used to represent the Git repository I did [du .git] which returned 424356. Next to check the space used to represent the working directory files, I did [du .] which returned 590312. Next subtracting 590312 - 424356, gives me the size of the directory without .git which is 165956. Next to check which files consumed the most space I did [du | sort -h] which showed me that the .git folder which was 424356, and lisp which was 72888, and src which was 20468.
+
+423008	./objects
+415112	./objects/pack
+7892	./objects/info
+780	./logs
+772	./logs/refs
+
+Git stores all objects in the ./objects directory. Objects can include a commit, tree, blob, or annotated tag. Since the core of Git is a simple key-value data store, all these objects are stored in one folder and therefore it is the largest
+
+2. To get the number of both remote and local branches I did [git branch --list -a|wc -l] which outputted 353. Next to get the number of remote branches I did [git branch --list -r|wc -l] which output 177. So the number of local branches is 353-177 which is 176.
+
+3. I did [git remote] and it outputted 2 remote repositories: origin and savannah. Then I did [git remote -v] to see where they were:
+
+origin	/u/cs/fac/eggert/src/gnu/emacs (fetch)
+origin	/u/cs/fac/eggert/src/gnu/emacs (push)
+savannah	https://git.savannah.gnu.org/git/emacs.git (fetch)
+savannah	https://git.savannah.gnu.org/git/emacs.git (push)
+
+4. I did [git for-each-ref --sort=-committerdate refs/heads| head -n 10] to output 10 branches which were sorted by their commit date. This output:
+
+104b68b670eb6de6614c562ae6b18c009b20584f commit	refs/heads/master
+d2873706749ef68803e79bab6109a534f4c9d23a commit	refs/heads/scratch/joaot/make-completion-at-point-function
+dd3fa9411a28175f9a1a984a69cfa7162023c5df commit	refs/heads/feature/windows-with-utils
+8f22251e595d7598d6643b0d24bf5f409dc59fa8 commit	refs/heads/scratch/completion-api
+8a4de19dfb52551a65c360a9346ede137d0fc6e8 commit	refs/heads/scratch/a-modest-completion-redesign-proposal
+2b0f589134d9427a96ab8cf0d8473715740984ef commit	refs/heads/scratch/fido-mode
+924a4201d24c10c48db920815ebf98dfaadc1e85 commit	refs/heads/feature/gnus-select2
+7a10082093791f0e035e4f9f95a774a7be1cd586 commit	refs/heads/feature/extend_face_id
+079461b360a2467ff4ab2ec57516c6f9e45f50fe commit	refs/heads/scratch/jit-lock-antiblink-cleaned-up
+55dcd32ad2209dc34bfb6b713bf73be9bf4c4cb2 commit	refs/heads/emacs-26
+
+5. I did [git rev-list --count master] and got 141268 commits
+
+6. I did [git rev-list --all --count] to get the number of commits in all branches: 145595. So the percentage is number of commits in master branch/number of commits in all branches: (141268/145595)*100 = 97.02%
+
+7. I did [git shortlog -n -s --since=2013-01-01| head -n 10], -n gives the number of commits, -s summarizes and only shows the count, and --since filters by date:
+
+ 3922	Eli Zaretskii
+  3792	Glenn Morris
+  3784	Paul Eggert
+  1887	Stefan Monnier
+  1833	Lars Ingebrigtsen
+  1671	Michael Albinus
+   671	Dmitry Gutov
+   604	Noam Postavsky
+   568	Juri Linkov
+   506	Alan Mackenzie
+
+8. I had to ssh again using -Y and then I did [gitk] to see the commit graph. Next I copied and pasted each commit hash and searched for it on the graph. Out of the 10 commit hashes, 3 were merges and had the following hashes:
+
+0c06b93c1e467debd401eb0b3be4652fde14fa95
+abcb2e62dae6aa26308f7ac9efc89247f89cbe65
+98ac36efe4ce4bd3a0bca76fc73ce6c7abaa4371
